@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentmeter"
+version = "0.1.0"
+description = "Measure AI by work completed, not tokens consumed."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "AgentMeter contributors"}]
+keywords = ["agents", "finops", "observability", "ai", "cost"]
+classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Topic :: System :: Monitoring"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "build>=1"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+agentmeter = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
