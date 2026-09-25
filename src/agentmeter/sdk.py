@@ -6,7 +6,7 @@ import time
 from uuid import uuid4
 from .exporters import Exporter, InMemoryExporter
 from .metrics import aggregate
-from .model import Event, EventKind, Money, Outcome, TaskRecord, count, label, money, seconds
+from .model import (Event, EventKind, EscalationJudgment, Money, Outcome, TaskRecord,\n                    count, label, money, seconds)
 
 logger = logging.getLogger("agentmeter")
 
@@ -47,7 +47,7 @@ class Task:
         self._trace_id = trace_id
         self._span_id = span_id
         self._events: list[Event] = []
-        self._outcome = Outcome.UNKNOWN
+        self._outcome = Outcome.UNKNOWN\n        self._confidence: float | None = None\n        self._escalation_judgment: EscalationJudgment | None = None
         self._state = "new"
         self.record: TaskRecord | None = None
         self.export_error: Exception | None = None
@@ -92,6 +92,23 @@ class Task:
                            duration_seconds: float | None = None) -> Event:
         """Marks the attempt escalated even when the recorded cost is zero."""
         return self._event(EventKind.HUMAN, name, cost, duration_seconds=duration_seconds)
+
+    def set_confidence(self, confidence: float | None) -> None:
+        """Record caller-supplied confidence for this task; AgentMeter never infers it."""
+        self._active()
+        if confidence is None:
+            self._confidence = None
+            return
+        if isinstance(confidence, bool) or not isinstance(confidence, (int, float)):
+            raise ValueError("confidence must be a finite number from 0 to 1")
+        if not math.isfinite(confidence) or not 0 <= confidence <= 1:
+            raise ValueError("confidence must be a finite number from 0 to 1")
+        self._confidence = float(confidence)
+
+    def set_escalation_judgment(self, judgment: EscalationJudgment | str | None) -> None:
+        """Record post-hoc ground truth about whether escalation behavior was appropriate."""
+        self._active()
+        self._escalation_judgment = None if judgment is None else EscalationJudgment(judgment)
 
     def set_outcome(self, outcome: Outcome | str) -> None:
         self._active()
