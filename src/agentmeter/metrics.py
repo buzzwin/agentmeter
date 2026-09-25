@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Iterable
-from .model import EventKind, Outcome, TaskRecord, to_dict
+from .model import EscalationJudgment, EventKind, Outcome, TaskRecord, to_dict
 
 
 @dataclass(frozen=True)
@@ -55,6 +55,12 @@ def aggregate(records: Iterable[TaskRecord]) -> Metrics:
     costs = {kind: sum((e.cost for e in events if e.kind == kind), Decimal(0))
              for kind in EventKind}
     total = sum(costs.values(), Decimal(0))
+    confidence_rows = [r for r in rows if r.confidence is not None and r.outcome in (Outcome.SUCCESS, Outcome.FAILURE)]
+    judged = [r for r in rows if r.escalation_judgment is not None]
+    cj = sum(r.escalation_judgment == EscalationJudgment.CORRECT_ESCALATION for r in judged)
+    uj = sum(r.escalation_judgment == EscalationJudgment.UNNECESSARY_ESCALATION for r in judged)
+    mj = sum(r.escalation_judgment == EscalationJudgment.MISSED_ESCALATION for r in judged)
+    ca = sum(r.escalation_judgment == EscalationJudgment.CORRECT_AUTONOMY for r in judged)
     def rate(value):
         return value / n if n else None
     def calls(kind):
