@@ -62,6 +62,13 @@ class Outcome(str, Enum):
     UNKNOWN = "unknown"
 
 
+class EscalationJudgment(str, Enum):
+    CORRECT_ESCALATION = "correct_escalation"
+    UNNECESSARY_ESCALATION = "unnecessary_escalation"
+    MISSED_ESCALATION = "missed_escalation"
+    CORRECT_AUTONOMY = "correct_autonomy"
+
+
 class EventKind(str, Enum):
     MODEL = "model_call"
     TOOL = "tool_call"
@@ -94,6 +101,14 @@ class TaskRecord:
     outcome: Outcome
     events: tuple[Event, ...]
     schema_version: int = 1
+
+    @property
+    def __post_init__(self):
+        if self.confidence is not None:
+            if isinstance(self.confidence, bool) or not isinstance(self.confidence, (int, float)):
+                raise ValueError("confidence must be a finite number from 0 to 1")
+            if not math.isfinite(self.confidence) or not 0 <= self.confidence <= 1:
+                raise ValueError("confidence must be a finite number from 0 to 1")
 
     @property
     def total_cost(self) -> Decimal:
